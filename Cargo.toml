@@ -1,0 +1,21 @@
+[package]
+name = "vjoy"
+version = "0.1.0"
+edition = "2021"
+authors = ["Maximillian Pfeil <pfeil.maximillian@gmail.com>"]
+description = "Idiomatic and safe rust wrapper for vjoy-sys"
+repository = "https://github.com/ArrowMaxGithub/vjoy-sys"
+license = "MIT OR Apache-2.0"
+keywords = ["input", "virtual", "joystick", "vjoy", "gamepad"]
+categories = ["api-bindings", "emulators", "os::windows-apis"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+vjoy-sys = "0.1.2"
+thiserror = "1.0.40"
+log = "0.4.17"
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
+targets = ["x86_64-pc-windows-msvc"]
