@@ -1,4 +1,4 @@
-Safe and idiomatic wrapper for [vJoy-sys](https://crates.io/crates/vjoy-sys).
+Idiomatic and safe wrapper for [vJoy-sys](https://crates.io/crates/vjoy-sys).
 
 # About vJoy
 vJoy simulates up to 16 input devices with up to 128 buttons, 8 axes, and 4 hat switches.
