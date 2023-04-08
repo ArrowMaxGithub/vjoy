@@ -1,6 +1,6 @@
 Idiomatic and safe wrapper for [vjoy-sys](https://crates.io/crates/vjoy-sys).
 
-# About vJoy
+## About vJoy
 vJoy simulates up to 16 input devices with up to 128 buttons, 8 axes, and 4 hat switches.
 The virtual devices can be used to 
 1) Emulate gamepads/joysticks for older games that require a specific kind of input.
@@ -9,13 +9,13 @@ The virtual devices can be used to
 
 The virtual devices appear to applications as regular input devices.
 
-# Usage
+## Usage
 The [vJoy driver](https://sourceforge.net/projects/vjoystick/) needs to be installed and is only available for Windows.
 
 The vJoy shared library is loaded at runtime via libloading. See the integration tests for specifics.
 
-# Example
-```no_run
+## Example
+```rust,no_run
 use vjoy::{VJoy, ButtonState, Error};
 
 fn main() -> Result<(), Error>{
@@ -33,6 +33,6 @@ fn main() -> Result<(), Error>{
 }
 ```
 
-# Planned features
+## Planned features
 - Support for hat switches
 - Rust native input viewer via egui
