@@ -2,7 +2,7 @@ use crate::axis::Axis;
 use crate::button::{Button, ButtonState};
 use crate::device::Device;
 use crate::error::{AppError, Error, FFIError};
-use crate::{AXES_DISPLAY_NAMES, AXES_HID_USAGE};
+use crate::{Hat, AXES_DISPLAY_NAMES, AXES_HID_USAGE};
 use log::trace;
 use vjoy_sys::VjdStat;
 
@@ -86,6 +86,10 @@ impl VJoy {
             self.set_button(device.id, button.id, button.state)?;
         }
 
+        for hat in &device.hats {
+            self.set_hat(device.id, hat.id, hat.value)?;
+        }
+
         for axis in &device.axes {
             self.set_axis(device.id, axis.id, axis.value)?;
         }
@@ -129,10 +133,20 @@ impl VJoy {
                     }
                 }
 
+                let hat_count = unsafe { self.ffi.GetVJDContPovNumber(device_id) } as u32;
+                let hats: Vec<Hat> = (1..=hat_count)
+                    .map(|hat_id| Hat {
+                        id: hat_id as u8,
+                        value: 0,
+                    })
+                    .collect();
+                trace!("Device {} hat switch count: {}", device_id, hats.len());
+
                 self.devices.push(Device {
                     id: device_id,
                     buttons,
                     axes,
+                    hats,
                 })
             }
         }
@@ -163,6 +177,21 @@ impl VJoy {
                 return Err(Error::Ffi(FFIError::AxisCouldNotBeSet(
                     device_id,
                     axis_id,
+                    device_state,
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    fn set_hat(&self, device_id: u32, hat_id: u8, value: u32) -> Result<(), Error> {
+        unsafe {
+            let result = self.ffi.SetContPov(value, device_id, hat_id);
+            if result != 1 {
+                let device_state = self.get_device_ffi_status(device_id);
+                return Err(Error::Ffi(FFIError::HatCouldNotBeSet(
+                    device_id,
+                    hat_id,
                     device_state,
                 )));
             }

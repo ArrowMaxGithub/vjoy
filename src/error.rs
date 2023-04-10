@@ -35,6 +35,9 @@ pub enum FFIError {
     #[error("button {1} of Device {0} could not be set. Device Status: {2}")]
     ButtonCouldNotBeSet(u32, u8, VjdStat),
 
+    #[error("hat {1} of Device {0} could not be set. Device Status: {2}")]
+    HatCouldNotBeSet(u32, u8, VjdStat),
+
     #[error("axis {1} of Device {0} could not be set. Device Status: {2}")]
     AxisCouldNotBeSet(u32, u32, VjdStat),
 }

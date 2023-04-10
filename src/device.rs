@@ -1,6 +1,7 @@
 use crate::axis::Axis;
 use crate::button::{Button, ButtonState};
 use crate::error::{AppError, Error};
+use crate::Hat;
 use std::fmt::Display;
 use std::slice::Iter;
 use std::slice::IterMut;
@@ -56,6 +57,7 @@ pub struct Device {
     pub(crate) id: u32,
     pub(crate) buttons: Vec<Button>,
     pub(crate) axes: Vec<Axis>,
+    pub(crate) hats: Vec<Hat>,
 }
 
 impl Device {
@@ -76,6 +78,14 @@ impl Device {
     }
 
     pub fn axes(&self) -> Iter<Axis> {
+        self.axes.iter()
+    }
+
+    pub fn hats_mut(&mut self) -> IterMut<Axis> {
+        self.axes.iter_mut()
+    }
+
+    pub fn hats(&self) -> Iter<Axis> {
         self.axes.iter()
     }
 

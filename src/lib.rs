@@ -12,6 +12,9 @@ pub use device::Device;
 mod axis;
 pub use axis::Axis;
 
+mod hat;
+pub use hat::Hat;
+
 mod button;
 pub use button::{Button, ButtonState};
 

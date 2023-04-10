@@ -1,4 +1,4 @@
-Idiomatic and safe wrapper for [vjoy-sys](https://crates.io/crates/vjoy-sys).
+Safe and idiomatic Rust wrapper for for [vjoy-sys](https://crates.io/crates/vjoy-sys).
 
 # About vJoy
 vJoy simulates up to 16 input devices with up to 128 buttons, 8 axes, and 4 hat switches.
@@ -34,5 +34,4 @@ fn main() -> Result<(), Error>{
 ```
 
 # Planned features
-- Support for hat switches
 - Rust native input viewer via egui
