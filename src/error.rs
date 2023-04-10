@@ -21,6 +21,9 @@ pub enum AppError {
 
     #[error("button {1} of Device {0} could not be found.")]
     ButtonNotFound(u32, u8),
+
+    #[error("hat {1} of Device {0} could not be found.")]
+    HatNotFound(u32, u8),
 }
 
 #[derive(Error, Debug)]

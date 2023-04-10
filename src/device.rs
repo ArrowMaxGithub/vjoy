@@ -81,12 +81,12 @@ impl Device {
         self.axes.iter()
     }
 
-    pub fn hats_mut(&mut self) -> IterMut<Axis> {
-        self.axes.iter_mut()
+    pub fn hats_mut(&mut self) -> IterMut<Hat> {
+        self.hats.iter_mut()
     }
 
-    pub fn hats(&self) -> Iter<Axis> {
-        self.axes.iter()
+    pub fn hats(&self) -> Iter<Hat> {
+        self.hats.iter()
     }
 
     pub fn set_button(&mut self, button_id: u8, state: ButtonState) -> Result<(), Error> {
@@ -100,6 +100,21 @@ impl Device {
 
         let button = &mut self.buttons[index];
         button.set(state);
+
+        Ok(())
+    }
+
+    pub fn set_hat(&mut self, hat_id: u8, value: u32) -> Result<(), Error> {
+        let index = match self
+            .hats
+            .binary_search_by(|hat| hat.id.cmp(&hat_id))
+        {
+            Ok(i) => i,
+            Err(_) => return Err(Error::App(AppError::HatNotFound(self.id, hat_id))),
+        };
+
+        let hat = &mut self.hats[index];
+        hat.set(value);
 
         Ok(())
     }
