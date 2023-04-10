@@ -12,7 +12,7 @@ categories = ["api-bindings", "emulators", "os::windows-apis"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-vjoy-sys = "0.1.2"
+vjoy-sys = "0.2.0"
 thiserror = "1.0.40"
 log = "0.4.17"
 

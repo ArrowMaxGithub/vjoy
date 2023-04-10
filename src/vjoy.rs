@@ -2,9 +2,10 @@ use crate::axis::Axis;
 use crate::button::{Button, ButtonState};
 use crate::device::Device;
 use crate::error::{AppError, Error, FFIError};
-use crate::{Hat, AXES_DISPLAY_NAMES, AXES_HID_USAGE};
+use crate::hat::HatState;
+use crate::Hat;
 use log::trace;
-use vjoy_sys::VjdStat;
+use vjoy_sys::{VjdStat, AXES_DISPLAY_NAMES, AXES_HID_USAGE};
 
 /// Main entry for this crate and controller for all vJoy devices.
 ///
@@ -87,7 +88,7 @@ impl VJoy {
         }
 
         for hat in &device.hats {
-            self.set_hat(device.id, hat.id, hat.value)?;
+            self.set_hat(device.id, hat.id, hat.state)?;
         }
 
         for axis in &device.axes {
@@ -133,11 +134,11 @@ impl VJoy {
                     }
                 }
 
-                let hat_count = unsafe { self.ffi.GetVJDContPovNumber(device_id) } as u32;
+                let hat_count = unsafe { self.ffi.GetVJDDiscPovNumber(device_id) } as u32;
                 let hats: Vec<Hat> = (1..=hat_count)
                     .map(|hat_id| Hat {
                         id: hat_id as u8,
-                        value: 0,
+                        state: HatState::Centered,
                     })
                     .collect();
                 trace!("Device {} hat switch count: {}", device_id, hats.len());
@@ -184,9 +185,9 @@ impl VJoy {
         Ok(())
     }
 
-    fn set_hat(&self, device_id: u32, hat_id: u8, value: u32) -> Result<(), Error> {
+    fn set_hat(&self, device_id: u32, hat_id: u8, state: HatState) -> Result<(), Error> {
         unsafe {
-            let result = self.ffi.SetContPov(value, device_id, hat_id);
+            let result = self.ffi.SetDiscPov(state as i32, device_id, hat_id);
             if result != 1 {
                 let device_state = self.get_device_ffi_status(device_id);
                 return Err(Error::Ffi(FFIError::HatCouldNotBeSet(

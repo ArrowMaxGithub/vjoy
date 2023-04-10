@@ -1,6 +1,7 @@
 use crate::axis::Axis;
 use crate::button::{Button, ButtonState};
 use crate::error::{AppError, Error};
+use crate::hat::HatState;
 use crate::Hat;
 use std::fmt::Display;
 use std::slice::Iter;
@@ -104,17 +105,14 @@ impl Device {
         Ok(())
     }
 
-    pub fn set_hat(&mut self, hat_id: u8, value: u32) -> Result<(), Error> {
-        let index = match self
-            .hats
-            .binary_search_by(|hat| hat.id.cmp(&hat_id))
-        {
+    pub fn set_hat(&mut self, hat_id: u8, state: HatState) -> Result<(), Error> {
+        let index = match self.hats.binary_search_by(|hat| hat.id.cmp(&hat_id)) {
             Ok(i) => i,
             Err(_) => return Err(Error::App(AppError::HatNotFound(self.id, hat_id))),
         };
 
         let hat = &mut self.hats[index];
-        hat.set(value);
+        hat.set(state);
 
         Ok(())
     }

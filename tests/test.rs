@@ -3,7 +3,7 @@
 mod tests {
     // The process by which devices are acquired from the C API is not compatible with Rust's test harness and only works within the same test.
     // The tests can be monitored via the vJoyMonitor and vJoyList executables bundled with vJoy.
-    use vjoy::{ButtonState, VJoy};
+    use vjoy::{ButtonState, HatState, VJoy};
 
     #[test]
     fn test() {
@@ -21,6 +21,16 @@ mod tests {
         vjoy.update_device_state(&device_1).unwrap();
         std::thread::sleep(std::time::Duration::from_millis(100));
 
+        println!("Setting hat 1 of device 1");
+        device_1.set_hat(1, HatState::East).unwrap();
+        vjoy.update_device_state(&device_1).unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        println!("Resetting hat 1 of device 1");
+        device_1.set_hat(1, HatState::Centered).unwrap();
+        vjoy.update_device_state(&device_1).unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
         println!("Setting axis 1 of device 1 to i32::MAX");
         device_1.set_axis(1, i32::MAX).unwrap();
         vjoy.update_device_state(&device_1).unwrap();
@@ -32,10 +42,14 @@ mod tests {
         std::thread::sleep(std::time::Duration::from_millis(100));
         // Simple test for 1 device
 
-        // Test all buttons/axes for 1 device
+        // Test all buttons/axes/hats for 1 device
         println!("Setting all buttons for device 1");
         for button in device_1.buttons_mut() {
             button.set(ButtonState::Pressed);
+        }
+        println!("Setting all hats for device 1");
+        for hat in device_1.hats_mut() {
+            hat.set(HatState::East);
         }
         println!("Setting all axes to MAX");
         for axis in device_1.axes_mut() {
@@ -48,19 +62,26 @@ mod tests {
         for button in device_1.buttons_mut() {
             button.set(ButtonState::Released);
         }
+        println!("Resetting all hats for device 1");
+        for hat in device_1.hats_mut() {
+            hat.set(HatState::Centered);
+        }
         println!("Setting all axes to MIN");
         for axis in device_1.axes_mut() {
             axis.set(i32::MIN);
         }
         std::thread::sleep(std::time::Duration::from_millis(100));
         vjoy.update_device_state(&device_1).unwrap();
-        // Test all buttons/axes for 1 device
+        // Test all buttons/axes/hats for 1 device
 
-        // Test all buttons/axes for all devices
+        // Test all buttons/axes/hats for all devices
         println!("Test all buttons/axes for all devices");
         for device in &mut vjoy.devices_cloned() {
             for button in device.buttons_mut() {
                 button.set(ButtonState::Pressed);
+            }
+            for hat in device_1.hats_mut() {
+                hat.set(HatState::East);
             }
             for axis in device.axes_mut() {
                 axis.set(i32::MAX);
@@ -71,20 +92,26 @@ mod tests {
             for button in device.buttons_mut() {
                 button.set(ButtonState::Released);
             }
+            for hat in device_1.hats_mut() {
+                hat.set(HatState::Centered);
+            }
             for axis in device.axes_mut() {
                 axis.set(i32::MIN);
             }
             std::thread::sleep(std::time::Duration::from_millis(100));
             vjoy.update_device_state(&device).unwrap();
         }
-        // Test all buttons/axes for all devices
+        // Test all buttons/axes/hats for all devices
 
-        // Rapid test all buttons/axes for all devices
+        // Rapid test all buttons/axes/hats for all devices
         println!("Rapid test all buttons/axes for all devices");
         for _ in 0..1000 {
             for device in &mut vjoy.devices_cloned() {
                 for button in device.buttons_mut() {
                     button.set(ButtonState::Pressed);
+                }
+                for hat in device_1.hats_mut() {
+                    hat.set(HatState::East);
                 }
                 for axis in device.axes_mut() {
                     axis.set(i32::MAX);
@@ -94,12 +121,15 @@ mod tests {
                 for button in device.buttons_mut() {
                     button.set(ButtonState::Released);
                 }
+                for hat in device_1.hats_mut() {
+                    hat.set(HatState::Centered);
+                }
                 for axis in device.axes_mut() {
                     axis.set(i32::MIN);
                 }
                 vjoy.update_device_state(&device).unwrap();
             }
         }
-        // Rapid test all buttons/axes for all devices
+        // Rapid test all buttons/axes/hats for all devices
     }
 }
