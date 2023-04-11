@@ -3,7 +3,7 @@ use crate::button::{Button, ButtonState};
 use crate::device::Device;
 use crate::error::{AppError, Error, FFIError};
 use crate::hat::HatState;
-use crate::Hat;
+use crate::{FourWayHat, Hat};
 use log::trace;
 use vjoy_sys::{VjdStat, AXES_DISPLAY_NAMES, AXES_HID_USAGE};
 
@@ -111,7 +111,7 @@ impl VJoy {
                 trace!("Device {} button count: {}", device_id, buttons.len());
 
                 let mut axes = Vec::new();
-                for axis_id in 1..=8 {
+                for axis_id in 1..=16 {
                     let axis_index = (axis_id - 1) as usize;
                     let axis_display_name = AXES_DISPLAY_NAMES[axis_index].to_string();
                     let axis_hid_usage = AXES_HID_USAGE[axis_index];
@@ -134,13 +134,27 @@ impl VJoy {
                     }
                 }
 
-                let hat_count = unsafe { self.ffi.GetVJDDiscPovNumber(device_id) } as u32;
-                let hats: Vec<Hat> = (1..=hat_count)
-                    .map(|hat_id| Hat {
-                        id: hat_id as u8,
-                        state: HatState::Centered,
-                    })
-                    .collect();
+                let hat_disc_count = unsafe { self.ffi.GetVJDDiscPovNumber(device_id) } as u32;
+                let hat_cont_count = unsafe { self.ffi.GetVJDContPovNumber(device_id) } as u32;
+
+                let hats = if hat_disc_count > 0 {
+                    (1..=hat_disc_count)
+                        .map(|hat_id| Hat {
+                            id: hat_id as u8,
+                            state: HatState::Discrete(FourWayHat::Centered),
+                        })
+                        .collect()
+                } else if hat_cont_count > 0 {
+                    (1..=hat_cont_count)
+                        .map(|hat_id| Hat {
+                            id: hat_id as u8,
+                            state: HatState::Continuous(u32::MAX),
+                        })
+                        .collect()
+                } else {
+                    Vec::new()
+                };
+
                 trace!("Device {} hat switch count: {}", device_id, hats.len());
 
                 self.devices.push(Device {
@@ -187,7 +201,10 @@ impl VJoy {
 
     fn set_hat(&self, device_id: u32, hat_id: u8, state: HatState) -> Result<(), Error> {
         unsafe {
-            let result = self.ffi.SetDiscPov(state as i32, device_id, hat_id);
+            let result = match state {
+                HatState::Discrete(disc) => self.ffi.SetDiscPov(disc as i32, device_id, hat_id),
+                HatState::Continuous(cont) => self.ffi.SetContPov(cont, device_id, hat_id),
+            };
             if result != 1 {
                 let device_state = self.get_device_ffi_status(device_id);
                 return Err(Error::Ffi(FFIError::HatCouldNotBeSet(

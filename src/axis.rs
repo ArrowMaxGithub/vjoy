@@ -3,14 +3,8 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 /// Current state of an enabled device axis.
 ///
-/// Range of IDs is 1..=8 for consistency with the .dll.
-///
-/// Table of IDs vs display names and hid usages:
-///
-/// | ID            |   1  |   2  |   3  |   4  |   5  |   6  |    7   |       8      |
-/// |---------------|:----:|:----:|:----:|:----:|:----:|:----:|:------:|:------------:|
-/// | Display name  |   X  |   Y  |   Z  |  Rx  |  Ry  |  Rz  | Slider | Dial/Slider2 |
-/// | HID usage     | 0x30 | 0x31 | 0x32 | 0x33 | 0x34 | 0x35 |  0x36  |     0x37     |
+/// Range of IDs is 1..=16 for consistency with the .dll.
+/// See vjoy-sys::AXES_DISPLAY_NAMES and vjoy-sys::AXES_HID_USAGE for axis descriptors.
 pub struct Axis {
     pub(crate) id: u32,
     pub(crate) value: i32,

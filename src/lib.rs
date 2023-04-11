@@ -13,7 +13,7 @@ mod axis;
 pub use axis::Axis;
 
 mod hat;
-pub use hat::{Hat, HatState};
+pub use hat::{FourWayHat, Hat, HatState};
 
 mod button;
 pub use button::{Button, ButtonState};

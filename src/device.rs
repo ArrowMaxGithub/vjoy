@@ -1,8 +1,8 @@
+use crate::FourWayHat;
 use crate::axis::Axis;
 use crate::button::{Button, ButtonState};
 use crate::error::{AppError, Error};
-use crate::hat::HatState;
-use crate::Hat;
+use crate::hat::{Hat, HatState};
 use std::fmt::Display;
 use std::slice::Iter;
 use std::slice::IterMut;
@@ -12,7 +12,7 @@ use std::slice::IterMut;
 ///
 /// Range of IDs is 1..=16 for consistency with the .dll.
 ///
-/// A device can be configured by the driver (vJoy install dir --> vJoyConf.exe). By default only device 1 is enabled with all 8 axes, all 128 buttons, and 0 hat switches.
+/// A device can be configured by the driver (vJoy install dir --> vJoyConf.exe).
 ///
 /// The [buttons](Self::buttons) and [axes](Self::axes) iterators always correspond to the enabled buttons/axes for this device.
 ///
@@ -90,6 +90,14 @@ impl Device {
         self.hats.iter()
     }
 
+    pub fn hat_type(&self) -> HatState {
+        let Some(hat) = self.hats.first() else {
+            return HatState::Discrete(FourWayHat::Centered);
+        };
+
+        hat.state
+    }
+
     pub fn set_button(&mut self, button_id: u8, state: ButtonState) -> Result<(), Error> {
         let index = match self
             .buttons
@@ -135,6 +143,9 @@ impl Device {
         for axis in &mut self.axes {
             axis.reset();
         }
+        for hat in &mut self.hats {
+            hat.reset();
+        }
 
         Ok(())
     }
@@ -143,10 +154,12 @@ impl Device {
 impl Display for Device {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "Device ID: {} | button count: {} | axes count {}",
+            "Device ID: {} | button count: {} | axes count: {} | hat count: {} | hat type: {:?}",
             self.id,
             self.buttons.len(),
-            self.axes.len()
+            self.axes.len(),
+            self.hats.len(),
+            self.hat_type(),
         ))
     }
 }

@@ -1,18 +1,32 @@
 #[derive(Debug, Clone, Copy)]
-pub enum HatState {
+#[repr(i32)]
+pub enum FourWayHat {
+    Centered = -1,
     North = 0,
     East = 1,
     South = 2,
     West = 3,
-    Centered = 4,
 }
-impl Default for HatState {
-    fn default() -> Self {
-        Self::Centered
+
+/// Common state for either a 4-way hat or a continuous 360° hat switch
+#[derive(Debug, Clone, Copy)]
+pub enum HatState {
+    Discrete(FourWayHat),
+    Continuous(u32),
+}
+
+impl HatState {
+    fn reset(&mut self) {
+        *self = match self {
+            HatState::Discrete(_) => HatState::Discrete(FourWayHat::Centered),
+            HatState::Continuous(_) => HatState::Continuous(u32::MAX),
+        };
     }
 }
 
 /// Current state of an enabled device hat switch.
+///
+/// A vJoy hat switch is either a 4-way discrete switch or a continuous switch. Continuous switches feature a range of 360° with a 1/100° resolution.
 #[derive(Debug, Clone)]
 pub struct Hat {
     pub(crate) id: u8,
@@ -29,6 +43,6 @@ impl Hat {
     }
 
     pub fn reset(&mut self) {
-        self.state = HatState::default();
+        self.state.reset();
     }
 }
