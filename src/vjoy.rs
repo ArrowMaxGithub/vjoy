@@ -98,6 +98,43 @@ impl VJoy {
         Ok(())
     }
 
+    /// All vJoy devices share the same guid and vendor/device information.
+    ///
+    /// To differentiate between vJoy devices from other libraries (e.g. SDL2), you may use the configuration instead.
+    pub fn get_id_for_configuration(
+        &self,
+        num_buttons: u32,
+        num_axes: u32,
+        num_hats: u32,
+    ) -> Result<u32, Error> {
+        let find: Vec<&Device> = self
+            .devices
+            .iter()
+            .filter(|device| {
+                device.buttons.len() as u32 == num_buttons
+                    && device.axes.len() as u32 == num_axes
+                    && device.hats.len() as u32 == num_hats
+            })
+            .collect();
+
+        if find.len() > 1 {
+            return Err(Error::App(AppError::DeviceConfigMultipleFound(
+                num_buttons,
+                num_axes,
+                num_hats,
+            )));
+        }
+
+        match find.first() {
+            Some(device) => Ok(device.id),
+            None => Err(Error::App(AppError::DeviceConfigNotFound(
+                num_buttons,
+                num_axes,
+                num_hats,
+            ))),
+        }
+    }
+
     fn fetch_devices(&mut self) {
         for device_id in 1..=16 {
             if self.acquire_device(device_id).is_ok() {

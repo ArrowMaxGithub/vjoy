@@ -1,8 +1,8 @@
-use crate::FourWayHat;
 use crate::axis::Axis;
 use crate::button::{Button, ButtonState};
 use crate::error::{AppError, Error};
 use crate::hat::{Hat, HatState};
+use crate::FourWayHat;
 use std::fmt::Display;
 use std::slice::Iter;
 use std::slice::IterMut;

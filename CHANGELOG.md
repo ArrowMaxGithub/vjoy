@@ -1,3 +1,6 @@
+## [0.3.1] Config search patch
+- Added: vJoy devices can be searched by their configuration (num_buttons, num_axes, num_hats).
+
 ## [0.3.0] Updated vJoy version
 - Added: Support for up to 4 continuous hat switches in the range of 0..360° with a 1/100° resolution.
 - Changed: Max number of axis increased to 16

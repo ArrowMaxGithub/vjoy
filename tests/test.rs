@@ -10,7 +10,7 @@ mod tests {
         let mut vjoy = VJoy::from_default_dll_location().unwrap();
         let mut device_1 = vjoy.get_device_state(1).unwrap();
 
-        let (hat_set, hat_reset) = match device_1.hat_type(){
+        let (hat_set, hat_reset) = match device_1.hat_type() {
             HatState::Discrete(_) => (
                 HatState::Discrete(FourWayHat::East),
                 HatState::Discrete(FourWayHat::Centered),

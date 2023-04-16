@@ -13,6 +13,12 @@ pub enum Error {
 #[derive(Error, Debug)]
 /// Errors that arise from incorrect usage of the wrapper API - e.g. requesting buttons outside reported limits.
 pub enum AppError {
+    #[error("multiple devices with configuration buttons: {0} axes: {0} hats: {0} found.")]
+    DeviceConfigMultipleFound(u32, u32, u32),
+
+    #[error("device with configuration buttons: {0} axes: {0} hats: {0} was not found.")]
+    DeviceConfigNotFound(u32, u32, u32),
+
     #[error("device with ID {0} was not found.")]
     DeviceNotFound(u32),
 
