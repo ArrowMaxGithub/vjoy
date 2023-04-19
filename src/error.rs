@@ -41,6 +41,9 @@ pub enum FFIError {
     #[error("device with ID {0} could not be acquired. Device Status: {1}")]
     DeviceCouldNotBeAcquired(u32, VjdStat),
 
+    #[error("device with ID {0} could not be updated from pointer data. Device Status: {1}")]
+    DeviceDataCouldNotBeUpdated(u32, VjdStat),
+
     #[error("button {1} of Device {0} could not be set. Device Status: {2}")]
     ButtonCouldNotBeSet(u32, u8, VjdStat),
 

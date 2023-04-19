@@ -5,8 +5,7 @@ use crate::error::{AppError, Error, FFIError};
 use crate::hat::HatState;
 use crate::{FourWayHat, Hat};
 use log::trace;
-use rayon::prelude::ParallelIterator;
-use vjoy_sys::{VjdStat, AXES_DISPLAY_NAMES, AXES_HID_USAGE};
+use vjoy_sys::{VjdStat, AXES_DISPLAY_NAMES, AXES_HID_USAGE, JOYSTICK_POSITION};
 
 /// Main entry for this crate and controller for all vJoy devices.
 ///
@@ -85,31 +84,94 @@ impl VJoy {
 
         let device = self.devices.get_mut(index).unwrap();
         *device = new_device_state.clone();
-        
-        device.buttons_par()
-            .for_each(|button|{
-                Self::set_button(&self.ffi, device.id, button.id, button.state).unwrap();
-        });
-        device.axes_par()
-            .for_each(|axis|{
-                Self::set_axis(&self.ffi, device.id, axis.id, axis.value).unwrap();
-        });
-        device.hats_par()
-            .for_each(|hat|{
-                Self::set_hat(&self.ffi, device.id, hat.id, hat.state).unwrap();
-        });
 
-        // for button in &device.buttons {
-        //     self.set_button(device.id, button.id, button.state)?;
-        // }
+        // Axes value or default mid-point
+        let axis_data: Vec<i32> = (0..16)
+            .map(|index| {
+                if let Some(axis) = device.axes.get(index) {
+                    axis.get()
+                } else {
+                    16384
+                }
+            })
+            .collect();
 
-        // for hat in &device.hats {
-        //     self.set_hat(device.id, hat.id, hat.state)?;
-        // }
+        let button_data: Vec<ButtonState> = (0..128)
+            .map(|index| {
+                if let Some(button) = device.buttons.get(index) {
+                    button.get()
+                } else {
+                    ButtonState::Released
+                }
+            })
+            .collect();
 
-        // for axis in &device.axes {
-        //     self.set_axis(device.id, axis.id, axis.value)?;
-        // }
+        // 4 fields á 32 buttons as single bits
+        let mut button_field_data = [0; 4];
+        for (i, field) in button_field_data.iter_mut().enumerate() {
+            let start = i * 32;
+            let end = i * 32 + 32;
+
+            let buttons = &button_data[start..end];
+            for (bit, state) in buttons.iter().enumerate().take(32) {
+                if *state == ButtonState::Pressed {
+                    *field |= 0x1 << bit;
+                }
+            }
+        }
+
+        let hats_data: Vec<u32> = (0..4)
+            .map(|index| {
+                if let Some(hat) = device.hats.get(index) {
+                    match hat.get() {
+                        HatState::Continuous(c) => c,
+                        HatState::Discrete(d) => d as u32,
+                    }
+                } else {
+                    0
+                }
+            })
+            .collect();
+
+        let mut data = JOYSTICK_POSITION {
+            bDevice: device.id as u8,
+
+            wAxisX: axis_data[0],
+            wAxisY: axis_data[1],
+            wAxisZ: axis_data[2],
+            wAxisXRot: axis_data[3],
+            wAxisYRot: axis_data[4],
+            wAxisZRot: axis_data[5],
+            wDial: axis_data[6],
+            wSlider: axis_data[7],
+            wWheel: axis_data[8],
+            wAccelerator: axis_data[9],
+            wBrake: axis_data[10],
+            wClutch: axis_data[11],
+            wSteering: axis_data[12],
+            wAileron: axis_data[13],
+            wRudder: axis_data[14],
+            wThrottle: axis_data[15],
+
+            wAxisVX: 0,
+            wAxisVY: 0,
+            wAxisVZ: 0,
+            wAxisVBRX: 0,
+            wAxisVBRY: 0,
+            wAxisVBRZ: 0,
+
+            lButtons: button_field_data[0],
+            lButtonsEx1: button_field_data[1],
+            lButtonsEx2: button_field_data[2],
+            lButtonsEx3: button_field_data[3],
+
+            bHats: hats_data[0],
+            bHatsEx1: hats_data[1],
+            bHatsEx2: hats_data[2],
+            bHatsEx3: hats_data[3],
+        };
+
+        Self::update_device_data(&self.ffi, device.id, &mut data)?;
 
         Ok(())
     }
@@ -236,7 +298,7 @@ impl VJoy {
             }
         }
     }
-    
+
     #[profiling::function]
     fn acquire_device(&self, device_id: u32) -> Result<(), Error> {
         unsafe {
@@ -261,7 +323,32 @@ impl VJoy {
     }
 
     #[profiling::function]
-    fn set_button(ffi: &vjoy_sys::vJoyInterface, device_id: u32, button_id: u8, state: ButtonState) -> Result<(), Error> {
+    fn update_device_data(
+        ffi: &vjoy_sys::vJoyInterface,
+        device_id: u32,
+        data: &mut JOYSTICK_POSITION,
+    ) -> Result<(), Error> {
+        unsafe {
+            let ptr = data as *mut JOYSTICK_POSITION;
+            let result = ffi.UpdateVJD(device_id, ptr);
+            if result != 1 {
+                let device_state = Self::get_device_ffi_status(ffi, device_id);
+                return Err(Error::Ffi(FFIError::DeviceDataCouldNotBeUpdated(
+                    device_id,
+                    device_state,
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    #[profiling::function]
+    fn set_button(
+        ffi: &vjoy_sys::vJoyInterface,
+        device_id: u32,
+        button_id: u8,
+        state: ButtonState,
+    ) -> Result<(), Error> {
         unsafe {
             let result = ffi.SetBtn(state as i32, device_id, button_id);
             if result != 1 {
@@ -277,7 +364,12 @@ impl VJoy {
     }
 
     #[profiling::function]
-    fn set_axis(ffi: &vjoy_sys::vJoyInterface, device_id: u32, axis_id: u32, value: i32) -> Result<(), Error> {
+    fn set_axis(
+        ffi: &vjoy_sys::vJoyInterface,
+        device_id: u32,
+        axis_id: u32,
+        value: i32,
+    ) -> Result<(), Error> {
         unsafe {
             let axis_index = (axis_id - 1) as usize;
             let axis_hid = AXES_HID_USAGE[axis_index];
@@ -295,7 +387,12 @@ impl VJoy {
     }
 
     #[profiling::function]
-    fn set_hat(ffi: &vjoy_sys::vJoyInterface, device_id: u32, hat_id: u8, state: HatState) -> Result<(), Error> {
+    fn set_hat(
+        ffi: &vjoy_sys::vJoyInterface,
+        device_id: u32,
+        hat_id: u8,
+        state: HatState,
+    ) -> Result<(), Error> {
         unsafe {
             let result = match state {
                 HatState::Discrete(disc) => ffi.SetDiscPov(disc as i32, device_id, hat_id),

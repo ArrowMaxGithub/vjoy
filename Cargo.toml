@@ -1,6 +1,6 @@
 [package]
 name = "vjoy"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
 authors = ["Maximillian Pfeil <pfeil.maximillian@gmail.com>"]
 description = "Idiomatic and safe wrapper for vjoy-sys"
