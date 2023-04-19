@@ -1,3 +1,7 @@
+## [0.4.0] Profiling & performance update
+- Added: Support for profile tracing via the [profiling](https://crates.io/crates/profiling) crate.
+- Changed: Calls to update_device_state now update the driver's device state in one step via a JOYSTICK_POSITION pointer. ~40 times faster than setting each button/axis/hat individually.
+
 ## [0.3.1] Config search patch
 - Added: vJoy devices can be searched by their configuration (num_buttons, num_axes, num_hats).
 
