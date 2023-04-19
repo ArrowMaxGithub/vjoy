@@ -16,6 +16,7 @@ pub enum HatState {
 }
 
 impl HatState {
+    #[profiling::function]
     fn reset(&mut self) {
         *self = match self {
             HatState::Discrete(_) => HatState::Discrete(FourWayHat::Centered),
@@ -34,14 +35,17 @@ pub struct Hat {
 }
 
 impl Hat {
-    pub fn get(&mut self) -> HatState {
+    #[profiling::function]
+    pub fn get(&self) -> HatState {
         self.state
     }
 
+    #[profiling::function]
     pub fn set(&mut self, state: HatState) {
         self.state = state;
     }
 
+    #[profiling::function]
     pub fn reset(&mut self) {
         self.state.reset();
     }

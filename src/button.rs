@@ -27,20 +27,24 @@ pub struct Button {
 }
 
 impl Button {
-    pub fn get(&mut self) -> ButtonState {
+    #[profiling::function]
+    pub fn get(&self) -> ButtonState {
         self.state
     }
 
+    #[profiling::function]
     pub fn set(&mut self, value: ButtonState) {
         self.state = value;
     }
 
+    #[profiling::function]
     pub fn reset(&mut self) {
         self.state = ButtonState::default();
     }
 }
 
 impl Display for Button {
+    #[profiling::function]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
             "Button ID: {} | state: {}",

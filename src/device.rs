@@ -1,3 +1,5 @@
+use rayon::prelude::IntoParallelRefIterator;
+
 use crate::axis::Axis;
 use crate::button::{Button, ButtonState};
 use crate::error::{AppError, Error};
@@ -62,34 +64,57 @@ pub struct Device {
 }
 
 impl Device {
+    #[profiling::function]
     pub fn id(&self) -> u32 {
         self.id
     }
 
+    #[profiling::function]
     pub fn buttons_mut(&mut self) -> IterMut<Button> {
         self.buttons.iter_mut()
     }
 
+    #[profiling::function]
     pub fn buttons(&self) -> Iter<Button> {
         self.buttons.iter()
     }
 
+    #[profiling::function]
+    pub fn buttons_par(&self) -> rayon::slice::Iter<Button> {
+        self.buttons.par_iter()
+    }
+
+    #[profiling::function]
     pub fn axes_mut(&mut self) -> IterMut<Axis> {
         self.axes.iter_mut()
     }
 
+    #[profiling::function]
     pub fn axes(&self) -> Iter<Axis> {
         self.axes.iter()
     }
 
+    #[profiling::function]
+    pub fn axes_par(&self) -> rayon::slice::Iter<Axis> {
+        self.axes.par_iter()
+    }
+
+    #[profiling::function]
     pub fn hats_mut(&mut self) -> IterMut<Hat> {
         self.hats.iter_mut()
     }
 
+    #[profiling::function]
     pub fn hats(&self) -> Iter<Hat> {
         self.hats.iter()
     }
 
+    #[profiling::function]
+    pub fn hats_par(&self) -> rayon::slice::Iter<Hat> {
+        self.hats.par_iter()
+    }
+
+    #[profiling::function]
     pub fn hat_type(&self) -> HatState {
         let Some(hat) = self.hats.first() else {
             return HatState::Discrete(FourWayHat::Centered);
@@ -98,6 +123,7 @@ impl Device {
         hat.state
     }
 
+    #[profiling::function]
     pub fn set_button(&mut self, button_id: u8, state: ButtonState) -> Result<(), Error> {
         let index = match self
             .buttons
@@ -113,6 +139,7 @@ impl Device {
         Ok(())
     }
 
+    #[profiling::function]
     pub fn set_hat(&mut self, hat_id: u8, state: HatState) -> Result<(), Error> {
         let index = match self.hats.binary_search_by(|hat| hat.id.cmp(&hat_id)) {
             Ok(i) => i,
@@ -125,6 +152,7 @@ impl Device {
         Ok(())
     }
 
+    #[profiling::function]
     pub fn set_axis(&mut self, axis_id: u32, value: i32) -> Result<(), Error> {
         let index = match self.axes.binary_search_by(|axis| axis.id.cmp(&axis_id)) {
             Ok(i) => i,
@@ -136,6 +164,7 @@ impl Device {
         Ok(())
     }
 
+    #[profiling::function]
     pub fn reset_all(&mut self) -> Result<(), Error> {
         for button in &mut self.buttons {
             button.reset();
@@ -152,6 +181,7 @@ impl Device {
 }
 
 impl Display for Device {
+    #[profiling::function]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
             "Device ID: {} | button count: {} | axes count: {} | hat count: {} | hat type: {:?}",

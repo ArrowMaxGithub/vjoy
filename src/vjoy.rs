@@ -5,6 +5,7 @@ use crate::error::{AppError, Error, FFIError};
 use crate::hat::HatState;
 use crate::{FourWayHat, Hat};
 use log::trace;
+use rayon::prelude::ParallelIterator;
 use vjoy_sys::{VjdStat, AXES_DISPLAY_NAMES, AXES_HID_USAGE};
 
 /// Main entry for this crate and controller for all vJoy devices.
@@ -43,10 +44,12 @@ pub struct VJoy {
 }
 
 impl VJoy {
+    #[profiling::function]
     pub fn from_default_dll_location() -> Result<Self, Error> {
         Self::from_dll_location("C:/Program Files/vJoy/x64/vJoyInterface.dll")
     }
 
+    #[profiling::function]
     pub fn from_dll_location(path: &str) -> Result<Self, Error> {
         let mut vjoy = Self::new(path)?;
         vjoy.fetch_devices();
@@ -54,10 +57,12 @@ impl VJoy {
         Ok(vjoy)
     }
 
+    #[profiling::function]
     pub fn devices_cloned(&mut self) -> Vec<Device> {
         self.devices.clone()
     }
 
+    #[profiling::function]
     pub fn get_device_state(&self, device_id: u32) -> Result<Device, Error> {
         match self
             .devices
@@ -68,6 +73,7 @@ impl VJoy {
         }
     }
 
+    #[profiling::function]
     pub fn update_device_state(&mut self, new_device_state: &Device) -> Result<(), Error> {
         let index = match self
             .devices
@@ -77,23 +83,33 @@ impl VJoy {
             Err(_) => return Err(Error::App(AppError::DeviceNotFound(new_device_state.id))),
         };
 
-        {
-            let device = self.devices.get_mut(index).unwrap();
-            *device = new_device_state.clone();
-        }
+        let device = self.devices.get_mut(index).unwrap();
+        *device = new_device_state.clone();
+        
+        device.buttons_par()
+            .for_each(|button|{
+                Self::set_button(&self.ffi, device.id, button.id, button.state).unwrap();
+        });
+        device.axes_par()
+            .for_each(|axis|{
+                Self::set_axis(&self.ffi, device.id, axis.id, axis.value).unwrap();
+        });
+        device.hats_par()
+            .for_each(|hat|{
+                Self::set_hat(&self.ffi, device.id, hat.id, hat.state).unwrap();
+        });
 
-        let device = self.devices.get(index).unwrap();
-        for button in &device.buttons {
-            self.set_button(device.id, button.id, button.state)?;
-        }
+        // for button in &device.buttons {
+        //     self.set_button(device.id, button.id, button.state)?;
+        // }
 
-        for hat in &device.hats {
-            self.set_hat(device.id, hat.id, hat.state)?;
-        }
+        // for hat in &device.hats {
+        //     self.set_hat(device.id, hat.id, hat.state)?;
+        // }
 
-        for axis in &device.axes {
-            self.set_axis(device.id, axis.id, axis.value)?;
-        }
+        // for axis in &device.axes {
+        //     self.set_axis(device.id, axis.id, axis.value)?;
+        // }
 
         Ok(())
     }
@@ -101,6 +117,7 @@ impl VJoy {
     /// All vJoy devices share the same guid and vendor/device information.
     ///
     /// To differentiate between vJoy devices from other libraries (e.g. SDL2), you may use the configuration instead.
+    #[profiling::function]
     pub fn get_id_for_configuration(
         &self,
         num_buttons: u32,
@@ -135,6 +152,22 @@ impl VJoy {
         }
     }
 
+    #[profiling::function]
+    fn new(path: &str) -> Result<Self, Error> {
+        unsafe {
+            let Ok(ffi) = vjoy_sys::vJoyInterface::new(path)
+            else {
+                return Err(Error::Ffi(FFIError::DynamicLybraryNotFound(path.to_string())));
+            };
+
+            Ok(Self {
+                ffi,
+                devices: Vec::new(),
+            })
+        }
+    }
+
+    #[profiling::function]
     fn fetch_devices(&mut self) {
         for device_id in 1..=16 {
             if self.acquire_device(device_id).is_ok() {
@@ -203,57 +236,8 @@ impl VJoy {
             }
         }
     }
-
-    fn set_button(&self, device_id: u32, button_id: u8, state: ButtonState) -> Result<(), Error> {
-        unsafe {
-            let result = self.ffi.SetBtn(state as i32, device_id, button_id);
-            if result != 1 {
-                let device_state = self.get_device_ffi_status(device_id);
-                return Err(Error::Ffi(FFIError::ButtonCouldNotBeSet(
-                    device_id,
-                    button_id,
-                    device_state,
-                )));
-            }
-        }
-        Ok(())
-    }
-
-    fn set_axis(&self, device_id: u32, axis_id: u32, value: i32) -> Result<(), Error> {
-        unsafe {
-            let axis_index = (axis_id - 1) as usize;
-            let axis_hid = AXES_HID_USAGE[axis_index];
-            let result = self.ffi.SetAxis(value, device_id, axis_hid);
-            if result != 1 {
-                let device_state = self.get_device_ffi_status(device_id);
-                return Err(Error::Ffi(FFIError::AxisCouldNotBeSet(
-                    device_id,
-                    axis_id,
-                    device_state,
-                )));
-            }
-        }
-        Ok(())
-    }
-
-    fn set_hat(&self, device_id: u32, hat_id: u8, state: HatState) -> Result<(), Error> {
-        unsafe {
-            let result = match state {
-                HatState::Discrete(disc) => self.ffi.SetDiscPov(disc as i32, device_id, hat_id),
-                HatState::Continuous(cont) => self.ffi.SetContPov(cont, device_id, hat_id),
-            };
-            if result != 1 {
-                let device_state = self.get_device_ffi_status(device_id);
-                return Err(Error::Ffi(FFIError::HatCouldNotBeSet(
-                    device_id,
-                    hat_id,
-                    device_state,
-                )));
-            }
-        }
-        Ok(())
-    }
-
+    
+    #[profiling::function]
     fn acquire_device(&self, device_id: u32) -> Result<(), Error> {
         unsafe {
             let result = self.ffi.AcquireVJD(device_id);
@@ -268,6 +252,7 @@ impl VJoy {
         }
     }
 
+    #[profiling::function]
     fn relinquish_device(&self, device_id: u32) {
         unsafe {
             self.ffi.RelinquishVJD(device_id);
@@ -275,26 +260,67 @@ impl VJoy {
         }
     }
 
-    fn get_device_ffi_status(&self, device_id: u32) -> VjdStat {
-        unsafe { self.ffi.GetVJDStatus(device_id) }
+    #[profiling::function]
+    fn set_button(ffi: &vjoy_sys::vJoyInterface, device_id: u32, button_id: u8, state: ButtonState) -> Result<(), Error> {
+        unsafe {
+            let result = ffi.SetBtn(state as i32, device_id, button_id);
+            if result != 1 {
+                let device_state = Self::get_device_ffi_status(ffi, device_id);
+                return Err(Error::Ffi(FFIError::ButtonCouldNotBeSet(
+                    device_id,
+                    button_id,
+                    device_state,
+                )));
+            }
+        }
+        Ok(())
     }
 
-    fn new(path: &str) -> Result<Self, Error> {
+    #[profiling::function]
+    fn set_axis(ffi: &vjoy_sys::vJoyInterface, device_id: u32, axis_id: u32, value: i32) -> Result<(), Error> {
         unsafe {
-            let Ok(ffi) = vjoy_sys::vJoyInterface::new(path)
-            else {
-                return Err(Error::Ffi(FFIError::DynamicLybraryNotFound(path.to_string())));
-            };
-
-            Ok(Self {
-                ffi,
-                devices: Vec::new(),
-            })
+            let axis_index = (axis_id - 1) as usize;
+            let axis_hid = AXES_HID_USAGE[axis_index];
+            let result = ffi.SetAxis(value, device_id, axis_hid);
+            if result != 1 {
+                let device_state = Self::get_device_ffi_status(ffi, device_id);
+                return Err(Error::Ffi(FFIError::AxisCouldNotBeSet(
+                    device_id,
+                    axis_id,
+                    device_state,
+                )));
+            }
         }
+        Ok(())
+    }
+
+    #[profiling::function]
+    fn set_hat(ffi: &vjoy_sys::vJoyInterface, device_id: u32, hat_id: u8, state: HatState) -> Result<(), Error> {
+        unsafe {
+            let result = match state {
+                HatState::Discrete(disc) => ffi.SetDiscPov(disc as i32, device_id, hat_id),
+                HatState::Continuous(cont) => ffi.SetContPov(cont, device_id, hat_id),
+            };
+            if result != 1 {
+                let device_state = Self::get_device_ffi_status(ffi, device_id);
+                return Err(Error::Ffi(FFIError::HatCouldNotBeSet(
+                    device_id,
+                    hat_id,
+                    device_state,
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    #[profiling::function]
+    fn get_device_ffi_status(ffi: &vjoy_sys::vJoyInterface, device_id: u32) -> VjdStat {
+        unsafe { ffi.GetVJDStatus(device_id) }
     }
 }
 
 impl Drop for VJoy {
+    #[profiling::function]
     fn drop(&mut self) {
         for device in &self.devices {
             self.relinquish_device(device.id);
