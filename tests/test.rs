@@ -53,6 +53,31 @@ mod tests {
         std::thread::sleep(std::time::Duration::from_millis(100));
         // Simple test for 1 device
 
+        // Simple test for 1 ref mut device
+        println!("Setting button 1 of device 1");
+        let device_1_mut = vjoy.get_device_state_mut(1).unwrap();
+        device_1_mut.set_button(1, ButtonState::Pressed).unwrap();
+
+        println!("Resetting button 1 of device 1");
+        device_1_mut.set_button(1, ButtonState::Released).unwrap();
+
+        println!("Setting hat 1 of device 1");
+        device_1_mut.set_hat(1, hat_set).unwrap();
+        vjoy.update_all_devices().unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        let device_1_mut = vjoy.get_device_state_mut(1).unwrap();
+        println!("Resetting hat 1 of device 1");
+        device_1_mut.set_hat(1, hat_reset).unwrap();
+
+        println!("Setting axis 1 of device 1 to i32::MAX");
+        device_1_mut.set_axis(1, i32::MAX).unwrap();
+
+        println!("Setting axis 1 of device 1 to i32::MIN");
+        device_1_mut.set_axis(1, i32::MIN).unwrap();
+        vjoy.update_all_devices().unwrap();
+        // Simple test for 1 ref mut device
+
         // Test all buttons/axes/hats for 1 device
         println!("Setting all buttons for device 1");
         for button in device_1.buttons_mut() {

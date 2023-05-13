@@ -1,3 +1,11 @@
+## [0.5.0] Utility and struct derives
+- Added: Missing (mutable) iterators to device states alongside the existing _cloned() function.
+- Added: update_all_devices to VJoy to update all previously set device states.
+- Added: Missing num_X functions for buttons, axes and hats to Device.
+- Added: Missing Display impl for Hat & HatState.
+- Added: [C-COMMON-TRAITS](https://rust-lang.github.io/api-guidelines/interoperability.html#types-eagerly-implement-common-traits-c-common-traits) derives to public structs.
+- Removed: Unused Rayon dependency.
+
 ## [0.4.0] Profiling & performance update
 - Added: Support for profile tracing via the [profiling](https://crates.io/crates/profiling) crate.
 - Changed: Calls to update_device_state now update the driver's device state in one step via a JOYSTICK_POSITION pointer. ~40 times faster than setting each button/axis/hat individually.

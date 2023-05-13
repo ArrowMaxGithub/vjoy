@@ -1,7 +1,8 @@
 use std::fmt::Display;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum ButtonState {
+    #[default]
     Released = 0,
     Pressed,
 }

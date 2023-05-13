@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 /// Current state of an enabled device axis.
 ///
 /// Range of IDs is 1..=16 for consistency with the .dll.

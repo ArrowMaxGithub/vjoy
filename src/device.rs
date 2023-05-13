@@ -1,5 +1,3 @@
-use rayon::prelude::IntoParallelRefIterator;
-
 use crate::axis::Axis;
 use crate::button::{Button, ButtonState};
 use crate::error::{AppError, Error};
@@ -9,7 +7,7 @@ use std::fmt::Display;
 use std::slice::Iter;
 use std::slice::IterMut;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 /// Current state of an enabled vJoy device.
 ///
 /// Range of IDs is 1..=16 for consistency with the .dll.
@@ -80,8 +78,8 @@ impl Device {
     }
 
     #[profiling::function]
-    pub fn buttons_par(&self) -> rayon::slice::Iter<Button> {
-        self.buttons.par_iter()
+    pub fn num_buttons(&self) -> usize {
+        self.buttons.len()
     }
 
     #[profiling::function]
@@ -95,8 +93,8 @@ impl Device {
     }
 
     #[profiling::function]
-    pub fn axes_par(&self) -> rayon::slice::Iter<Axis> {
-        self.axes.par_iter()
+    pub fn num_axes(&self) -> usize {
+        self.axes.len()
     }
 
     #[profiling::function]
@@ -110,8 +108,8 @@ impl Device {
     }
 
     #[profiling::function]
-    pub fn hats_par(&self) -> rayon::slice::Iter<Hat> {
-        self.hats.par_iter()
+    pub fn num_hats(&self) -> usize {
+        self.hats.len()
     }
 
     #[profiling::function]
@@ -125,15 +123,15 @@ impl Device {
 
     #[profiling::function]
     pub fn set_button(&mut self, button_id: u8, state: ButtonState) -> Result<(), Error> {
-        let index = match self
-            .buttons
-            .binary_search_by(|button| button.id.cmp(&button_id))
-        {
-            Ok(i) => i,
-            Err(_) => return Err(Error::App(AppError::ButtonNotFound(self.id, button_id))),
+        if button_id == 0 {
+            return Err(Error::App(AppError::ButtonNotFound(self.id, button_id)));
+        }
+
+        let button = match self.buttons.get_mut((button_id - 1) as usize) {
+            Some(button) => button,
+            None => return Err(Error::App(AppError::ButtonNotFound(self.id, button_id))),
         };
 
-        let button = &mut self.buttons[index];
         button.set(state);
 
         Ok(())
@@ -141,12 +139,15 @@ impl Device {
 
     #[profiling::function]
     pub fn set_hat(&mut self, hat_id: u8, state: HatState) -> Result<(), Error> {
-        let index = match self.hats.binary_search_by(|hat| hat.id.cmp(&hat_id)) {
-            Ok(i) => i,
-            Err(_) => return Err(Error::App(AppError::HatNotFound(self.id, hat_id))),
+        if hat_id == 0 {
+            return Err(Error::App(AppError::HatNotFound(self.id, hat_id)));
+        }
+
+        let hat = match self.hats.get_mut((hat_id - 1) as usize) {
+            Some(hat) => hat,
+            None => return Err(Error::App(AppError::HatNotFound(self.id, hat_id))),
         };
 
-        let hat = &mut self.hats[index];
         hat.set(state);
 
         Ok(())
@@ -154,11 +155,15 @@ impl Device {
 
     #[profiling::function]
     pub fn set_axis(&mut self, axis_id: u32, value: i32) -> Result<(), Error> {
-        let index = match self.axes.binary_search_by(|axis| axis.id.cmp(&axis_id)) {
-            Ok(i) => i,
-            Err(_) => return Err(Error::App(AppError::AxisNotFound(self.id, axis_id))),
+        if axis_id == 0 {
+            return Err(Error::App(AppError::AxisNotFound(self.id, axis_id)));
+        }
+
+        let axis = match self.axes.get_mut((axis_id - 1) as usize) {
+            Some(axis) => axis,
+            None => return Err(Error::App(AppError::AxisNotFound(self.id, axis_id))),
         };
-        let axis = &mut self.axes[index];
+
         axis.set(value);
 
         Ok(())

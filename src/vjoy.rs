@@ -57,32 +57,162 @@ impl VJoy {
     }
 
     #[profiling::function]
-    pub fn devices_cloned(&mut self) -> Vec<Device> {
+    pub fn devices_cloned(&self) -> Vec<Device> {
         self.devices.clone()
     }
 
     #[profiling::function]
+    pub fn devices(&self) -> std::slice::Iter<Device> {
+        self.devices.iter()
+    }
+
+    #[profiling::function]
+    pub fn devices_mut(&mut self) -> std::slice::IterMut<Device> {
+        self.devices.iter_mut()
+    }
+
+    #[profiling::function]
     pub fn get_device_state(&self, device_id: u32) -> Result<Device, Error> {
-        match self
-            .devices
-            .binary_search_by(|device| device.id.cmp(&device_id))
-        {
-            Ok(index) => Ok(self.devices[index].clone()),
-            Err(_) => Err(Error::App(AppError::DeviceNotFound(device_id))),
+        if device_id == 0 {
+            return Err(Error::App(AppError::DeviceNotFound(device_id)));
+        }
+
+        match self.devices.get((device_id - 1) as usize) {
+            Some(device) => Ok(device.clone()),
+            None => Err(Error::App(AppError::DeviceNotFound(device_id))),
         }
     }
 
     #[profiling::function]
+    pub fn get_device_state_ref(&self, device_id: u32) -> Result<&Device, Error> {
+        if device_id == 0 {
+            return Err(Error::App(AppError::DeviceNotFound(device_id)));
+        }
+
+        match self.devices.get((device_id - 1) as usize) {
+            Some(device) => Ok(device),
+            None => Err(Error::App(AppError::DeviceNotFound(device_id))),
+        }
+    }
+
+    #[profiling::function]
+    pub fn get_device_state_mut(&mut self, device_id: u32) -> Result<&mut Device, Error> {
+        if device_id == 0 {
+            return Err(Error::App(AppError::DeviceNotFound(device_id)));
+        }
+
+        match self.devices.get_mut((device_id - 1) as usize) {
+            Some(device) => Ok(device),
+            None => Err(Error::App(AppError::DeviceNotFound(device_id))),
+        }
+    }
+
+    #[profiling::function]
+    pub fn update_all_devices(&mut self) -> Result<(), Error> {
+        for device in self.devices.iter() {
+            // Axes value or default mid-point
+            let axis_data: Vec<i32> = (0..16)
+                .map(|index| {
+                    if let Some(axis) = device.axes.get(index) {
+                        axis.get()
+                    } else {
+                        16384
+                    }
+                })
+                .collect();
+
+            let button_data: Vec<ButtonState> = (0..128)
+                .map(|index| {
+                    if let Some(button) = device.buttons.get(index) {
+                        button.get()
+                    } else {
+                        ButtonState::Released
+                    }
+                })
+                .collect();
+
+            // 4 fields á 32 buttons as single bits
+            let mut button_field_data = [0; 4];
+            for (i, field) in button_field_data.iter_mut().enumerate() {
+                let start = i * 32;
+                let end = i * 32 + 32;
+
+                let buttons = &button_data[start..end];
+                for (bit, state) in buttons.iter().enumerate().take(32) {
+                    if *state == ButtonState::Pressed {
+                        *field |= 0x1 << bit;
+                    }
+                }
+            }
+
+            let hats_data: Vec<u32> = (0..4)
+                .map(|index| {
+                    if let Some(hat) = device.hats.get(index) {
+                        match hat.get() {
+                            HatState::Continuous(c) => c,
+                            HatState::Discrete(d) => d as u32,
+                        }
+                    } else {
+                        0
+                    }
+                })
+                .collect();
+
+            let mut data = JOYSTICK_POSITION {
+                bDevice: device.id as u8,
+
+                wAxisX: axis_data[0],
+                wAxisY: axis_data[1],
+                wAxisZ: axis_data[2],
+                wAxisXRot: axis_data[3],
+                wAxisYRot: axis_data[4],
+                wAxisZRot: axis_data[5],
+                wDial: axis_data[6],
+                wSlider: axis_data[7],
+                wWheel: axis_data[8],
+                wAccelerator: axis_data[9],
+                wBrake: axis_data[10],
+                wClutch: axis_data[11],
+                wSteering: axis_data[12],
+                wAileron: axis_data[13],
+                wRudder: axis_data[14],
+                wThrottle: axis_data[15],
+
+                wAxisVX: 0,
+                wAxisVY: 0,
+                wAxisVZ: 0,
+                wAxisVBRX: 0,
+                wAxisVBRY: 0,
+                wAxisVBRZ: 0,
+
+                lButtons: button_field_data[0],
+                lButtonsEx1: button_field_data[1],
+                lButtonsEx2: button_field_data[2],
+                lButtonsEx3: button_field_data[3],
+
+                bHats: hats_data[0],
+                bHatsEx1: hats_data[1],
+                bHatsEx2: hats_data[2],
+                bHatsEx3: hats_data[3],
+            };
+
+            Self::update_device_data(&self.ffi, device.id, &mut data)?;
+        }
+
+        Ok(())
+    }
+
+    #[profiling::function]
     pub fn update_device_state(&mut self, new_device_state: &Device) -> Result<(), Error> {
-        let index = match self
-            .devices
-            .binary_search_by(|device| device.id.cmp(&new_device_state.id))
-        {
-            Ok(i) => i,
-            Err(_) => return Err(Error::App(AppError::DeviceNotFound(new_device_state.id))),
+        if new_device_state.id == 0 {
+            return Err(Error::App(AppError::DeviceNotFound(new_device_state.id)));
+        }
+
+        let device = match self.devices.get_mut((new_device_state.id - 1) as usize) {
+            Some(device) => device,
+            None => return Err(Error::App(AppError::DeviceNotFound(new_device_state.id))),
         };
 
-        let device = self.devices.get_mut(index).unwrap();
         *device = new_device_state.clone();
 
         // Axes value or default mid-point

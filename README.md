@@ -1,4 +1,8 @@
-Safe and idiomatic Rust wrapper for for [vjoy-sys](https://crates.io/crates/vjoy-sys).
+[<img alt="Crates.io" src="https://img.shields.io/crates/v/vjoy">](https://crates.io/crates/vjoy)
+[<img alt="docs.rs" src="https://img.shields.io/docsrs/vjoy">](https://docs.rs/vjoy/latest/vjoy/)
+<img alt="Crates.io" src="https://img.shields.io/crates/l/vjoy">
+
+Safe and idiomatic wrapper for for [vjoy-sys](https://crates.io/crates/vjoy-sys).
 
 ## About vJoy
 vJoy simulates up to 16 input devices with up to 128 buttons, 16 axes, and 4 hat switches (4-way or continuous).
@@ -41,5 +45,6 @@ fn main() -> Result<(), Error>{
 }
 ```
 
-# Planned features
-- Rust native input viewer via egui
+## Compatibility notice
+Only few games/applications will listen on the additional HID-endpoint for axes 9..=16. 
+Many will stick to a 1..=8 axis range.

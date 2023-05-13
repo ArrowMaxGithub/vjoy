@@ -1,6 +1,9 @@
-#[derive(Debug, Clone, Copy)]
+use std::fmt::Display;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[repr(i32)]
 pub enum FourWayHat {
+    #[default]
     Centered = -1,
     North = 0,
     East = 1,
@@ -9,10 +12,25 @@ pub enum FourWayHat {
 }
 
 /// Common state for either a 4-way hat or a continuous 360° hat switch
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HatState {
     Discrete(FourWayHat),
     Continuous(u32),
+}
+
+impl Display for HatState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self{
+            HatState::Discrete(v) => f.write_str(&format!("Hat state discrete: {v:?}")),
+            HatState::Continuous(v) => f.write_str(&format!("Hat state continuous: {v:?}")),
+        }
+    }
+}
+
+impl Default for HatState {
+    fn default() -> Self {
+        Self::Discrete(FourWayHat::default())
+    }
 }
 
 impl HatState {
@@ -28,10 +46,20 @@ impl HatState {
 /// Current state of an enabled device hat switch.
 ///
 /// A vJoy hat switch is either a 4-way discrete switch or a continuous switch. Continuous switches feature a range of 360° with a 1/100° resolution.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Hat {
     pub(crate) id: u8,
     pub(crate) state: HatState,
+}
+
+impl Display for Hat {
+    #[profiling::function]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "Hat ID: {} | state: {}",
+            self.id, self.state
+        ))
+    }
 }
 
 impl Hat {
