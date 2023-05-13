@@ -24,7 +24,7 @@ use vjoy::{VJoy, ButtonState, Error, HatState, FourWayHat};
 
 fn main() -> Result<(), Error>{
     let mut vjoy = VJoy::from_default_dll_location()?;
-    let mut device_1 = vjoy.get_device_state(1)?;
+    let device_1 = vjoy.get_device_state_mut(1)?;
 
     device_1.set_button(1, ButtonState::Pressed)?;
     device_1.set_axis(1, i32::MAX)?;
@@ -36,10 +36,7 @@ fn main() -> Result<(), Error>{
     };
     device_1.set_hat(1, value)?;
 
-    vjoy.update_device_state(&device_1)?;
-
-    device_1.reset_all();
-    vjoy.update_device_state(&device_1)?;
+    vjoy.update_all_devices()?;
 
     Ok(())
 }

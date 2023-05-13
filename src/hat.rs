@@ -20,7 +20,7 @@ pub enum HatState {
 
 impl Display for HatState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self{
+        match self {
             HatState::Discrete(v) => f.write_str(&format!("Hat state discrete: {v:?}")),
             HatState::Continuous(v) => f.write_str(&format!("Hat state continuous: {v:?}")),
         }
@@ -55,10 +55,7 @@ pub struct Hat {
 impl Display for Hat {
     #[profiling::function]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!(
-            "Hat ID: {} | state: {}",
-            self.id, self.state
-        ))
+        f.write_fmt(format_args!("Hat ID: {} | state: {}", self.id, self.state))
     }
 }
 
