@@ -1,3 +1,7 @@
+## [0.6.0] Windows 11 compatibility
+- Changed: For compatibility reasons, the underlying vJoy version had to be changed. On Windows 11, only version [2.1.9.1](https://sourceforge.net/projects/vjoystick/files/Beta%202.x/2.1.9.1-160719/) is supported.
+- Changed: This version only supports up to 8 axes per device.
+
 ## [0.5.0] Utility and struct derives
 - Added: Missing (mutable) iterators to device states alongside the existing _cloned() function.
 - Added: update_all_devices to VJoy to update all previously set device states.

@@ -111,7 +111,7 @@ impl VJoy {
     pub fn update_all_devices(&mut self) -> Result<(), Error> {
         for device in self.devices.iter() {
             // Axes value or default mid-point
-            let axis_data: Vec<i32> = (0..16)
+            let axis_data: Vec<i32> = (0..8)
                 .map(|index| {
                     if let Some(axis) = device.axes.get(index) {
                         axis.get()
@@ -169,15 +169,11 @@ impl VJoy {
                 wAxisZRot: axis_data[5],
                 wDial: axis_data[6],
                 wSlider: axis_data[7],
-                wWheel: axis_data[8],
-                wAccelerator: axis_data[9],
-                wBrake: axis_data[10],
-                wClutch: axis_data[11],
-                wSteering: axis_data[12],
-                wAileron: axis_data[13],
-                wRudder: axis_data[14],
-                wThrottle: axis_data[15],
 
+                wWheel: 0,
+                wAileron: 0,
+                wRudder: 0,
+                wThrottle: 0,
                 wAxisVX: 0,
                 wAxisVY: 0,
                 wAxisVZ: 0,
@@ -216,7 +212,7 @@ impl VJoy {
         *device = new_device_state.clone();
 
         // Axes value or default mid-point
-        let axis_data: Vec<i32> = (0..16)
+        let axis_data: Vec<i32> = (0..8)
             .map(|index| {
                 if let Some(axis) = device.axes.get(index) {
                     axis.get()
@@ -274,15 +270,11 @@ impl VJoy {
             wAxisZRot: axis_data[5],
             wDial: axis_data[6],
             wSlider: axis_data[7],
-            wWheel: axis_data[8],
-            wAccelerator: axis_data[9],
-            wBrake: axis_data[10],
-            wClutch: axis_data[11],
-            wSteering: axis_data[12],
-            wAileron: axis_data[13],
-            wRudder: axis_data[14],
-            wThrottle: axis_data[15],
 
+            wWheel: 0,
+            wAileron: 0,
+            wRudder: 0,
+            wThrottle: 0,
             wAxisVX: 0,
             wAxisVY: 0,
             wAxisVZ: 0,
@@ -373,7 +365,7 @@ impl VJoy {
                 trace!("Device {} button count: {}", device_id, buttons.len());
 
                 let mut axes = Vec::new();
-                for axis_id in 1..=16 {
+                for axis_id in 1..=8 {
                     let axis_index = (axis_id - 1) as usize;
                     let axis_display_name = AXES_DISPLAY_NAMES[axis_index].to_string();
                     let axis_hid_usage = AXES_HID_USAGE[axis_index];

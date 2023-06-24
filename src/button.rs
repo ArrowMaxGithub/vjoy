@@ -14,7 +14,11 @@ impl ButtonState {
 
 impl Display for ButtonState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{}", self))
+        let str = match *self{
+            ButtonState::Released => "released",
+            ButtonState::Pressed => "pressed",
+        };
+        f.write_fmt(format_args!("{}", str))
     }
 }
 

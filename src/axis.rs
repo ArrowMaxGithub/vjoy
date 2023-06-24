@@ -3,7 +3,7 @@ use std::fmt::Display;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 /// Current state of an enabled device axis.
 ///
-/// Range of IDs is 1..=16 for consistency with the .dll.
+/// Range of IDs is 1..=8 for consistency with the .dll.
 /// See vjoy-sys::AXES_DISPLAY_NAMES and vjoy-sys::AXES_HID_USAGE for axis descriptors.
 pub struct Axis {
     pub(crate) id: u32,
