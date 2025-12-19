@@ -1,3 +1,6 @@
+## [0.7.1] Rustdoc patch
+- Changed: Updated vJoy driver links in README
+
 ## [0.7.0] Update to vJoy 2.2.2.0
 - Changed: Updated to vjoy-sys version 0.5.2 built against vJoy version 2.2.2.0
 
