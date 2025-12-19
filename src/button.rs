@@ -14,7 +14,7 @@ impl ButtonState {
 
 impl Display for ButtonState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str = match *self{
+        let str = match *self {
             ButtonState::Released => "released",
             ButtonState::Pressed => "pressed",
         };

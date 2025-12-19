@@ -5,7 +5,7 @@ use crate::error::{AppError, Error, FFIError};
 use crate::hat::HatState;
 use crate::{FourWayHat, Hat};
 use log::trace;
-use vjoy_sys::{VjdStat, AXES_DISPLAY_NAMES, AXES_HID_USAGE, JOYSTICK_POSITION};
+use vjoy_sys::{AXES_DISPLAY_NAMES, AXES_HID_USAGE, JOYSTICK_POSITION, VjdStat};
 
 /// Main entry for this crate and controller for all vJoy devices.
 ///
@@ -62,12 +62,12 @@ impl VJoy {
     }
 
     #[profiling::function]
-    pub fn devices(&self) -> std::slice::Iter<Device> {
+    pub fn devices(&self) -> std::slice::Iter<'_, Device> {
         self.devices.iter()
     }
 
     #[profiling::function]
-    pub fn devices_mut(&mut self) -> std::slice::IterMut<Device> {
+    pub fn devices_mut(&mut self) -> std::slice::IterMut<'_, Device> {
         self.devices.iter_mut()
     }
 
@@ -111,7 +111,7 @@ impl VJoy {
     pub fn update_all_devices(&mut self) -> Result<(), Error> {
         for device in self.devices.iter() {
             // Axes value or default mid-point
-            let axis_data: Vec<i32> = (0..8)
+            let axis_data: Vec<i32> = (0..16)
                 .map(|index| {
                     if let Some(axis) = device.axes.get(index) {
                         axis.get()
@@ -164,16 +164,24 @@ impl VJoy {
                 wAxisX: axis_data[0],
                 wAxisY: axis_data[1],
                 wAxisZ: axis_data[2],
+
                 wAxisXRot: axis_data[3],
                 wAxisYRot: axis_data[4],
                 wAxisZRot: axis_data[5],
+
                 wDial: axis_data[6],
                 wSlider: axis_data[7],
 
-                wWheel: 0,
-                wAileron: 0,
-                wRudder: 0,
-                wThrottle: 0,
+                wWheel: axis_data[8],
+                wAccelerator: axis_data[9],
+                wBrake: axis_data[10],
+                wClutch: axis_data[11],
+
+                wSteering: axis_data[12],
+                wAileron: axis_data[13],
+                wRudder: axis_data[14],
+                wThrottle: axis_data[15],
+
                 wAxisVX: 0,
                 wAxisVY: 0,
                 wAxisVZ: 0,
@@ -212,7 +220,7 @@ impl VJoy {
         *device = new_device_state.clone();
 
         // Axes value or default mid-point
-        let axis_data: Vec<i32> = (0..8)
+        let axis_data: Vec<i32> = (0..16)
             .map(|index| {
                 if let Some(axis) = device.axes.get(index) {
                     axis.get()
@@ -265,16 +273,24 @@ impl VJoy {
             wAxisX: axis_data[0],
             wAxisY: axis_data[1],
             wAxisZ: axis_data[2],
+
             wAxisXRot: axis_data[3],
             wAxisYRot: axis_data[4],
             wAxisZRot: axis_data[5],
+
             wDial: axis_data[6],
             wSlider: axis_data[7],
 
-            wWheel: 0,
-            wAileron: 0,
-            wRudder: 0,
-            wThrottle: 0,
+            wWheel: axis_data[8],
+            wAccelerator: axis_data[9],
+            wBrake: axis_data[10],
+            wClutch: axis_data[11],
+
+            wSteering: axis_data[12],
+            wAileron: axis_data[13],
+            wRudder: axis_data[14],
+            wThrottle: axis_data[15],
+
             wAxisVX: 0,
             wAxisVY: 0,
             wAxisVZ: 0,
@@ -339,9 +355,10 @@ impl VJoy {
     #[profiling::function]
     fn new(path: &str) -> Result<Self, Error> {
         unsafe {
-            let Ok(ffi) = vjoy_sys::vJoyInterface::new(path)
-            else {
-                return Err(Error::Ffi(FFIError::DynamicLybraryNotFound(path.to_string())));
+            let Ok(ffi) = vjoy_sys::vJoyInterface::new(path) else {
+                return Err(Error::Ffi(FFIError::DynamicLybraryNotFound(
+                    path.to_string(),
+                )));
             };
 
             Ok(Self {
@@ -372,10 +389,7 @@ impl VJoy {
                     let exists = unsafe { self.ffi.GetVJDAxisExist(device_id, axis_hid_usage) };
                     trace!(
                         "Device {} axis id: {} display name: {} hid usage: {}",
-                        device_id,
-                        axis_id,
-                        axis_display_name,
-                        axis_hid_usage
+                        device_id, axis_id, axis_display_name, axis_hid_usage
                     );
                     if exists == 1 {
                         let axis = Axis {

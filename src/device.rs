@@ -1,8 +1,8 @@
+use crate::FourWayHat;
 use crate::axis::Axis;
 use crate::button::{Button, ButtonState};
 use crate::error::{AppError, Error};
 use crate::hat::{Hat, HatState};
-use crate::FourWayHat;
 use std::fmt::Display;
 use std::slice::Iter;
 use std::slice::IterMut;
@@ -68,12 +68,12 @@ impl Device {
     }
 
     #[profiling::function]
-    pub fn buttons_mut(&mut self) -> IterMut<Button> {
+    pub fn buttons_mut(&mut self) -> IterMut<'_, Button> {
         self.buttons.iter_mut()
     }
 
     #[profiling::function]
-    pub fn buttons(&self) -> Iter<Button> {
+    pub fn buttons(&self) -> Iter<'_, Button> {
         self.buttons.iter()
     }
 
@@ -83,12 +83,12 @@ impl Device {
     }
 
     #[profiling::function]
-    pub fn axes_mut(&mut self) -> IterMut<Axis> {
+    pub fn axes_mut(&mut self) -> IterMut<'_, Axis> {
         self.axes.iter_mut()
     }
 
     #[profiling::function]
-    pub fn axes(&self) -> Iter<Axis> {
+    pub fn axes(&self) -> Iter<'_, Axis> {
         self.axes.iter()
     }
 
@@ -98,12 +98,12 @@ impl Device {
     }
 
     #[profiling::function]
-    pub fn hats_mut(&mut self) -> IterMut<Hat> {
+    pub fn hats_mut(&mut self) -> IterMut<'_, Hat> {
         self.hats.iter_mut()
     }
 
     #[profiling::function]
-    pub fn hats(&self) -> Iter<Hat> {
+    pub fn hats(&self) -> Iter<'_, Hat> {
         self.hats.iter()
     }
 

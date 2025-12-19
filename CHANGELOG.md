@@ -1,3 +1,6 @@
+## [0.7.0] Update to vJoy 2.2.2.0
+- Changed: Updated to vjoy-sys version 0.5.2 built against vJoy version 2.2.2.0
+
 ## [0.6.0] Windows 11 compatibility
 - Changed: For compatibility reasons, the underlying vJoy version had to be changed. On Windows 11, only version [2.1.9.1](https://sourceforge.net/projects/vjoystick/files/Beta%202.x/2.1.9.1-160719/) is supported.
 - Changed: This version only supports up to 8 axes per device.
