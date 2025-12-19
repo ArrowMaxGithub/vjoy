@@ -14,7 +14,7 @@ The virtual devices can be used to
 The virtual devices appear to applications as regular input devices.
 
 ## Usage
-The [vJoy driver](https://sourceforge.net/projects/vjoystick/files/Beta%202.x/2.1.9.1-160719/) version 2.1.9.1 needs to be installed and is only available for Windows.
+The [vJoy driver](https://github.com/BrunnerInnovation/vJoy/releases/tag/v2.2.2.0) version 2.2.2.0 needs to be installed and is only available for Windows.
 
 The vJoy shared library is loaded at runtime via libloading. See the integration tests for specifics.
 
